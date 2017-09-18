@@ -59,4 +59,11 @@ public class JedisTest {
 
     }
 
+    @Test
+    public void testmset() {
+        Jedis jedis = pool.getResource();
+        jedis.mset("123","66");
+        System.out.println(jedis.get("123"));
+    }
+
 }

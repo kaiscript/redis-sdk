@@ -1,5 +1,6 @@
 package io.kaiscript.redis;
 
+import org.apache.commons.lang3.StringUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisException;
 
@@ -11,15 +12,32 @@ public class JedisClient {
     private JedisManager manager;
 
     public void set(String key,String value) {
-        try(Jedis jedis = manager.getJedis()) {
+        if (StringUtils.isEmpty(key)) {
+            return;
+        }
+        set(key, value,-1);
+    }
+
+    public void set(String key, String value, int expire) {
+        try (Jedis jedis = manager.getJedis()) {
             if (jedis != null) {
-                jedis.set(key, value);
+                jedis.setex(key, expire, value);
             }
         } catch (Exception e) {
             throw new JedisException(e);
         }
     }
 
+    public long del(String key) {
+        try(Jedis jedis = manager.getJedis()) {
+            if (jedis != null) {
+                return jedis.del(key);
+            }
+        } catch (Exception e) {
+            throw new JedisException(e);
+        }
+        return 0;
+    }
 
     public String get(String key) {
         try(Jedis jedis = manager.getJedis()){
@@ -30,6 +48,28 @@ public class JedisClient {
             throw new JedisException(e);
         }
         return "";
+    }
+
+    public long incr(String key) {
+        try(Jedis jedis = manager.getJedis()){
+            if (jedis != null) {
+                return jedis.incr(key);
+            }
+        } catch (Exception e){
+            throw new JedisException(e);
+        }
+        return 0;
+    }
+
+    public long decr(String key) {
+        try (Jedis jedis = manager.getJedis()) {
+            if (jedis != null) {
+                return jedis.decr(key);
+            }
+        } catch (Exception e) {
+            throw new JedisException(e);
+        }
+        return 0;
     }
 
     public JedisManager getManager() {
