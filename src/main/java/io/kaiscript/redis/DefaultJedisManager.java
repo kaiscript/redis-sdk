@@ -11,8 +11,6 @@ import java.util.List;
  */
 public class DefaultJedisManager extends AbstractJedisManager {
 
-    private List<Pool<Jedis>> pools;
-
     public Jedis getJedis() {
         for (Pool<Jedis> pool : pools) {
             try {
