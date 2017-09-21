@@ -1,5 +1,6 @@
 package io.kaiscript.redis;
 
+import io.kaiscript.util.FSTSerializeUtil;
 import org.apache.commons.lang3.StringUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisException;
@@ -23,13 +24,7 @@ public class JedisClient {
     }
 
     public void set(String key, String value, int expire) {
-        try (Jedis jedis = manager.getJedis()) {
-            if (jedis != null) {
-                jedis.setex(key, expire, value);
-            }
-        } catch (Exception e) {
-            throw new JedisException(e);
-        }
+        setex(key, expire, value);
     }
 
     public String setex(String key,int seconds,String value) {
@@ -48,18 +43,31 @@ public class JedisClient {
         }
     }
 
-    public <T extends Serializable> void mset(List<T> list) {
+    public <T extends Serializable> void mset(List<T> list,KeyGenerator<T> keyGenerator) {
         byte[][] keysvalues = new byte[list.size() * 2][];
         int i = 0;
         for (T t : list) {
-            keysvalues[i++] = SafeEncoder.encode(t.toString());
+            keysvalues[i++] = SafeEncoder.encode(keyGenerator.key(t));
+            keysvalues[i++] = FSTSerializeUtil.serialize(t);
         }
-        //
+        try (Jedis jedis = manager.getJedis()) {
+            jedis.mset(keysvalues);
+        } catch (Exception e) {
+            throw new JedisException(e);
+        }
     }
 
     public void mset(String... keysvalues) {
         try (Jedis jedis = manager.getJedis()) {
             jedis.mset(keysvalues);
+        } catch (Exception e) {
+            throw new JedisException(e);
+        }
+    }
+
+    public List<String> mget(String... keys) {
+        try (Jedis jedis = manager.getJedis()) {
+            return jedis.mget(keys);
         } catch (Exception e) {
             throw new JedisException(e);
         }
@@ -98,12 +106,45 @@ public class JedisClient {
         return 0;
     }
 
+    public long incrBy(String key,long integer) {
+        try(Jedis jedis = manager.getJedis()){
+            if (jedis != null) {
+                return jedis.incrBy(key, integer);
+            }
+        } catch (Exception e){
+            throw new JedisException(e);
+        }
+        return 0;
+    }
+
     public long decr(String key) {
         try (Jedis jedis = manager.getJedis()) {
             if (jedis != null) {
                 return jedis.decr(key);
             }
         } catch (Exception e) {
+            throw new JedisException(e);
+        }
+        return 0;
+    }
+
+    public long decrBy(String key,long integer) {
+        try(Jedis jedis = manager.getJedis()){
+            if (jedis != null) {
+                return jedis.decrBy(key, integer);
+            }
+        } catch (Exception e){
+            throw new JedisException(e);
+        }
+        return 0;
+    }
+
+    public long ttl(String key) {
+        try(Jedis jedis = manager.getJedis()){
+            if (jedis != null) {
+                return jedis.ttl(key);
+            }
+        } catch (Exception e){
             throw new JedisException(e);
         }
         return 0;

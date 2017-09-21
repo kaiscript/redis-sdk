@@ -40,4 +40,15 @@ public class JedisClientTest {
         Assert.assertEquals(client.get(key),value);
     }
 
+    @Test
+    public void msetTest() {
+        client.mset("111", "666", "222", "888");
+        List<String> list = new ArrayList<>();
+        list.add("111");
+        list.add("222");
+        List<String> res = client.mget(list.toArray(new String[list.size()]));
+        Assert.assertEquals(res.get(0), "666");
+        Assert.assertEquals(res.get(1), "888");
+    }
+
 }
